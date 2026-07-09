@@ -1,0 +1,7 @@
+slint provides CMake targets:
+
+    find_package(Slint CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE Slint::Slint)
+
+To load .slint files at compile time, see the SlintMacro-provided slint_target_sources()
+in Slint's own documentation: https://docs.slint.dev/latest/docs/cpp/
