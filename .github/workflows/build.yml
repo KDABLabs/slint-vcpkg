@@ -101,10 +101,22 @@ jobs:
           cmake --build test/smoketest/build --config Release
           # find -exec does NOT propagate the executed command's exit status as find's
           # own exit status (a real bug that let the smoketest abort with SIGABRT while
-          # this step still reported success) -- so find the binary, then run it
-          # directly and let its exit code fail the step for real.
-          smoketest_bin="$(find test/smoketest/build -type f \
-            \( -name 'slint_vcpkg_smoketest' -o -name 'slint_vcpkg_smoketest.exe' \) -print -quit)"
+          # this step still reported success) -- so locate the binary explicitly and
+          # run it directly so its real exit code fails the step. Not using `find`:
+          # on Windows (multi-config Visual Studio generator) the binary lands under
+          # build/Release/*.exe rather than build/*, and find/exec through Git Bash's
+          # path handling on that layout produced a path that itself wasn't runnable
+          # (exit 127) -- so just check the known candidate locations directly instead.
+          smoketest_bin=""
+          for candidate in \
+              test/smoketest/build/Release/slint_vcpkg_smoketest.exe \
+              test/smoketest/build/slint_vcpkg_smoketest.exe \
+              test/smoketest/build/slint_vcpkg_smoketest; do
+            if [[ -f "${candidate}" ]]; then
+              smoketest_bin="${candidate}"
+              break
+            fi
+          done
           if [[ -z "${smoketest_bin}" ]]; then
             echo "error: smoketest binary not found under test/smoketest/build" >&2
             exit 1
