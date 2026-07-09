@@ -63,15 +63,52 @@ jobs:
 
       # Proves the installed package is a working library, not just something that
       # configured/compiled/linked. Runs the interpreter, no display server needed.
+      # test/smoketest also has its own vcpkg.json/vcpkg-configuration.json (for the
+      # separate registry-consumption job below) -- force classic mode here so this
+      # reuses the overlay-ports install above instead of re-resolving from the real
+      # registry over the network.
       - name: Build and run the smoketest against the installed package
         shell: bash
         run: |
           cmake -S test/smoketest -B test/smoketest/build \
-            -DCMAKE_TOOLCHAIN_FILE=../vcpkg-tool/scripts/buildsystems/vcpkg.cmake
+            -DCMAKE_TOOLCHAIN_FILE=../vcpkg-tool/scripts/buildsystems/vcpkg.cmake \
+            -DVCPKG_MANIFEST_MODE=OFF
           cmake --build test/smoketest/build --config Release
           find test/smoketest/build -type f \
             \( -name 'slint_vcpkg_smoketest' -o -name 'slint_vcpkg_smoketest.exe' \) \
             -exec {} \;
+
+  # Resolves slint/corrosion from the *published* git registry (this repo, at whatever
+  # commit test/smoketest/vcpkg-configuration.json currently pins), not overlay-ports.
+  # This is the real "does consuming this registry actually work" check; unlike the
+  # job above it needs network access to clone the registry, and it only exercises
+  # whatever is already pushed -- it won't reflect in-progress portfile changes on a
+  # PR branch until they're merged and the pinned commit is bumped.
+  registry-consumption:
+    name: registry consumption (manifest mode, from GitHub)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y libxkbcommon-dev libwayland-dev libx11-dev \
+            libxrandr-dev libxi-dev libxcursor-dev libgl1-mesa-dev libegl1-mesa-dev \
+            libfontconfig1-dev
+      - run: git clone --depth 1 https://github.com/microsoft/vcpkg.git ../vcpkg-tool
+      - run: ../vcpkg-tool/bootstrap-vcpkg.sh
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/vcpkg/archives
+          key: vcpkg-binarycache-${{ runner.os }}-${{ hashFiles('ports/**') }}
+          restore-keys: |
+            vcpkg-binarycache-${{ runner.os }}-
+      - name: Configure and build via the real registry
+        run: |
+          cmake -S test/smoketest -B test/smoketest/build \
+            -DCMAKE_TOOLCHAIN_FILE=../vcpkg-tool/scripts/buildsystems/vcpkg.cmake
+          cmake --build test/smoketest/build
+          test/smoketest/build/slint_vcpkg_smoketest
 
   # Opt-in features not yet verified to work fully offline (renderer-skia, backend-qt,
   # gettext -- see README's "Known limitations"). Kept separate so a failure here
