@@ -134,15 +134,16 @@ rediscovered the hard way:
    This clones the tag, runs `cargo vendor --locked`, and prints the archive's path
    and SHA512.
 
-2. Publish that archive as a release asset on this repository (e.g. under a
-   `slint-v1.18.0` tag) -- this is the one-time network cost per version; end users
-   installing from the registry never pay it.
+2. Publish that archive as a release asset on this repository, tagged
+   `slint-v1.18.0-assets` -- not `slint-v1.18.0`, to avoid implying the tag itself is
+   the Slint release; it only exists to host the vendor archive. This is the one-time
+   network cost per version; end users installing from the registry never pay it.
 
 3. Bump the port and regenerate the versions database:
 
    ```sh
    ./scripts/add-version.sh 1.18.0 \
-       --vendor-url https://github.com/<owner>/slint-vcpkg/releases/download/slint-v1.18.0/slint-1.18.0-vendor.tar.zst \
+       --vendor-url https://github.com/<owner>/slint-vcpkg/releases/download/slint-v1.18.0-assets/slint-1.18.0-vendor.tar.zst \
        --vendor-sha512 <printed by vendor-crates.sh>
    ```
 

@@ -22,11 +22,11 @@ vcpkg_from_github(
 
 # The vendored-crates archive lets the actual build run fully offline: it's produced once
 # per version by scripts/vendor-crates.sh (a `cargo vendor` snapshot of Slint's own
-# Cargo.lock) and published as a release asset on this registry. See README.md for details
-# and the "Vendoring Slint's cargo dependencies" note in the plan/design docs.
-# TODO: replace with the real published URL once this registry has a GitHub remote.
+# Cargo.lock) and published as a release asset on this registry, tagged
+# slint-v<version>-assets (not slint-v<version>, since that tag doesn't represent a
+# Slint release itself -- it only hosts this archive). See README.md for details.
 vcpkg_download_distfile(VENDOR_ARCHIVE
-    URLS "https://github.com/REPLACE_ME/slint-vcpkg/releases/download/slint-v${VERSION}/slint-${VERSION}-vendor.tar.zst"
+    URLS "https://github.com/KDABLabs/slint-vcpkg/releases/download/slint-v${VERSION}-assets/slint-${VERSION}-vendor.tar.zst"
     FILENAME "slint-${VERSION}-vendor.tar.zst"
     SHA512 0abe89ea5b828c4b9eb83a4adf0b89ca56fbd01a1dbe17d28a01cc44e1471117d6026ab8ee43f04d6bd887e914a09a7eb5c2ab2efcb3eab8c33502cc91e85f38
 )
