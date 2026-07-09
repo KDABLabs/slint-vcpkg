@@ -1,4 +1,5 @@
 *.tar.zst
 *.tar.gz
 build/
+vcpkg_installed/
 .claude/
