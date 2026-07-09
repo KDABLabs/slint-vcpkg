@@ -1,12 +1,17 @@
 // Functional smoke test for the slint vcpkg port: proves the installed package is a
-// working library, not just something that compiled. Requires the `interpreter`
-// feature. Does not open a window, so it needs no display server.
+// working library, not just something that compiled. Requires the `interpreter` and
+// `experimental` features. Uses the testing backend (slint::testing::init()) so it
+// needs no display server -- without it, even instantiating a Window component tries
+// to initialize a real windowing backend and aborts where none is available (CI).
 #include <slint-interpreter.h>
+#include <slint-testing.h>
 
 #include <iostream>
 
 int main()
 {
+    slint::testing::init();
+
     slint::interpreter::ComponentCompiler compiler;
     auto result = compiler.build_from_source(
             "export component App inherits Window { "

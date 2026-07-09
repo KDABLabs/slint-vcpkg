@@ -2,6 +2,11 @@
   "name": "slint-vcpkg-smoketest",
   "version-string": "0",
   "dependencies": [
-    "slint"
+    {
+      "name": "slint",
+      "features": [
+        "experimental"
+      ]
+    }
   ]
 }
