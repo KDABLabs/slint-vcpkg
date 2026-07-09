@@ -1,5 +1,9 @@
 # slint-vcpkg
 
+> **Experimental / work in progress.** This registry is early and not yet battle-tested
+> -- expect rough edges, breaking changes, and incomplete feature coverage (see "Known
+> limitations" below). Feedback and issues welcome, but don't depend on stability yet.
+
 An unofficial [vcpkg](https://vcpkg.io) registry for [Slint](https://slint.dev/), the
 declarative C++/Rust GUI toolkit. Provides `slint` and `corrosion` (the CMake/Rust
 integration Slint's C++ API is built with).
