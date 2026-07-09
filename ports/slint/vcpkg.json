@@ -17,13 +17,40 @@
     }
   ],
   "default-features": [
-    "interpreter",
-    "backend-winit",
-    "renderer-femtovg",
     "accessibility",
+    "backend-winit",
+    "interpreter",
+    "renderer-femtovg",
     "testing"
   ],
   "features": {
+    "accessibility": {
+      "description": "Enable integration with operating system provided accessibility APIs"
+    },
+    "backend-linuxkms": {
+      "description": "Enable the backend that renders a single window fullscreen on Linux using libseat. Requires libseat to be installed on the system."
+    },
+    "backend-linuxkms-noseat": {
+      "description": "Enable the backend that renders a single window fullscreen on Linux without libseat"
+    },
+    "backend-qt": {
+      "description": "Enable the Qt based rendering backend. Requires Qt 5.15+ or 6.2+ to be separately installed and discoverable via CMAKE_PREFIX_PATH; not provided by this port and not covered by the vendored offline build."
+    },
+    "backend-winit": {
+      "description": "Enable support for the winit crate to interact with all windowing systems"
+    },
+    "backend-winit-wayland": {
+      "description": "Enable support for the winit crate to interact only with the Wayland windowing system on Unix"
+    },
+    "backend-winit-x11": {
+      "description": "Enable support for the winit crate to interact only with the X11 windowing system on Unix"
+    },
+    "experimental": {
+      "description": "Enable experimental Slint features (no backward compatibility guarantees)"
+    },
+    "gettext": {
+      "description": "Enable support for translations using gettext. Requires gettext to be installed on the system; not provided by this port."
+    },
     "interpreter": {
       "description": "Enable support for the Slint interpreter to load .slint files at run-time"
     },
@@ -33,23 +60,8 @@
         "interpreter"
       ]
     },
-    "backend-winit": {
-      "description": "Enable support for the winit crate to interact with all windowing systems"
-    },
-    "backend-winit-x11": {
-      "description": "Enable support for the winit crate to interact only with the X11 windowing system on Unix"
-    },
-    "backend-winit-wayland": {
-      "description": "Enable support for the winit crate to interact only with the Wayland windowing system on Unix"
-    },
-    "backend-qt": {
-      "description": "Enable the Qt based rendering backend. Requires Qt 5.15+ or 6.2+ to be separately installed and discoverable via CMAKE_PREFIX_PATH; not provided by this port and not covered by the vendored offline build."
-    },
-    "backend-linuxkms": {
-      "description": "Enable the backend that renders a single window fullscreen on Linux using libseat. Requires libseat to be installed on the system."
-    },
-    "backend-linuxkms-noseat": {
-      "description": "Enable the backend that renders a single window fullscreen on Linux without libseat"
+    "mcp": {
+      "description": "Enable the embedded MCP server for AI-assisted debugging"
     },
     "renderer-femtovg": {
       "description": "Enable the OpenGL ES 2.0 based FemtoVG rendering engine"
@@ -72,23 +84,11 @@
     "software-renderer-path": {
       "description": "Enable Path element rendering with the software renderer"
     },
-    "gettext": {
-      "description": "Enable support for translations using gettext. Requires gettext to be installed on the system; not provided by this port."
-    },
-    "accessibility": {
-      "description": "Enable integration with operating system provided accessibility APIs"
-    },
-    "testing": {
-      "description": "Enable support for the Slint testing API (experimental)"
-    },
     "system-testing": {
       "description": "Enable support for controlling the application from a system testing tool"
     },
-    "experimental": {
-      "description": "Enable experimental Slint features (no backward compatibility guarantees)"
-    },
-    "mcp": {
-      "description": "Enable the embedded MCP server for AI-assisted debugging"
+    "testing": {
+      "description": "Enable support for the Slint testing API (experimental)"
     }
   }
 }
