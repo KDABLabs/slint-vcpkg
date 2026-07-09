@@ -1,0 +1,93 @@
+name: build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  offline-default-features:
+    name: ${{ matrix.os }} (offline, default features)
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux windowing dev packages
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxkbcommon-dev libwayland-dev libx11-dev \
+            libxrandr-dev libxi-dev libxcursor-dev libgl1-mesa-dev libegl1-mesa-dev \
+            libfontconfig1-dev
+
+      - name: Clone vcpkg
+        run: git clone --depth 1 https://github.com/microsoft/vcpkg.git ../vcpkg-tool
+
+      - name: Bootstrap vcpkg
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            ../vcpkg-tool/bootstrap-vcpkg.bat
+          else
+            ../vcpkg-tool/bootstrap-vcpkg.sh
+          fi
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/vcpkg/archives
+          key: vcpkg-binarycache-${{ runner.os }}-${{ hashFiles('ports/**') }}
+          restore-keys: |
+            vcpkg-binarycache-${{ runner.os }}-
+
+      # Corrosion needs no network at all. This is a smoke test in its own right.
+      - name: Install corrosion (must succeed with zero network access)
+        shell: bash
+        run: |
+          ../vcpkg-tool/vcpkg install corrosion --overlay-ports=./ports
+
+      # Slint's build should be able to run fully offline once the vendored-crates
+      # archive is downloaded. Block network access for the actual install to prove
+      # the vendoring pipeline works rather than silently falling back to a live
+      # network fetch of crates.io.
+      - name: Install slint (default features, network blocked after downloads)
+        shell: bash
+        env:
+          CARGO_NET_OFFLINE: "true"
+        run: |
+          ../vcpkg-tool/vcpkg install slint --overlay-ports=./ports
+
+      # Proves the installed package is a working library, not just something that
+      # configured/compiled/linked. Runs the interpreter, no display server needed.
+      - name: Build and run the smoketest against the installed package
+        shell: bash
+        run: |
+          cmake -S test/smoketest -B test/smoketest/build \
+            -DCMAKE_TOOLCHAIN_FILE=../vcpkg-tool/scripts/buildsystems/vcpkg.cmake
+          cmake --build test/smoketest/build --config Release
+          find test/smoketest/build -type f \
+            \( -name 'slint_vcpkg_smoketest' -o -name 'slint_vcpkg_smoketest.exe' \) \
+            -exec {} \;
+
+  # Opt-in features not yet verified to work fully offline (renderer-skia, backend-qt,
+  # gettext -- see README's "Known limitations"). Kept separate so a failure here
+  # doesn't block the core matrix above. Network is left enabled.
+  opt-in-features:
+    name: opt-in features (network allowed, best-effort)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y libxkbcommon-dev libwayland-dev libx11-dev \
+            libxrandr-dev libxi-dev libxcursor-dev libgl1-mesa-dev libegl1-mesa-dev \
+            libfontconfig1-dev
+      - run: git clone --depth 1 https://github.com/microsoft/vcpkg.git ../vcpkg-tool
+      - run: ../vcpkg-tool/bootstrap-vcpkg.sh
+      - run: ../vcpkg-tool/vcpkg install "slint[renderer-skia]" --overlay-ports=./ports
