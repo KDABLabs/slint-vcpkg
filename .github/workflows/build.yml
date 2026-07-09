@@ -54,10 +54,15 @@ jobs:
       # archive is downloaded. Block network access for the actual install to prove
       # the vendoring pipeline works rather than silently falling back to a live
       # network fetch of crates.io.
+      # VCPKG_KEEP_ENV_VARS=PATH: on Windows, vcpkg builds ports in a curated
+      # environment and does NOT propagate the calling process's PATH by default --
+      # without this, portfile.cmake's find_program(cargo) preflight can't see the
+      # Rust toolchain dtolnay/rust-toolchain just put on PATH. Harmless elsewhere.
       - name: Install slint (default features, network blocked after downloads)
         shell: bash
         env:
           CARGO_NET_OFFLINE: "true"
+          VCPKG_KEEP_ENV_VARS: "PATH"
         run: |
           ../vcpkg-tool/vcpkg install slint --overlay-ports=./ports
 
@@ -67,11 +72,15 @@ jobs:
       # separate registry-consumption job below) -- force classic mode here so this
       # reuses the overlay-ports install above instead of re-resolving from the real
       # registry over the network.
+      # CMAKE_TOOLCHAIN_FILE must be absolute: CMake resolves a relative
+      # toolchain-file path against the *build* directory (test/smoketest/build),
+      # not the invocation cwd, so a relative "../vcpkg-tool/..." silently resolved
+      # to the wrong place.
       - name: Build and run the smoketest against the installed package
         shell: bash
         run: |
           cmake -S test/smoketest -B test/smoketest/build \
-            -DCMAKE_TOOLCHAIN_FILE=../vcpkg-tool/scripts/buildsystems/vcpkg.cmake \
+            -DCMAKE_TOOLCHAIN_FILE="$(pwd)/../vcpkg-tool/scripts/buildsystems/vcpkg.cmake" \
             -DVCPKG_MANIFEST_MODE=OFF
           cmake --build test/smoketest/build --config Release
           find test/smoketest/build -type f \
@@ -104,9 +113,11 @@ jobs:
           restore-keys: |
             vcpkg-binarycache-${{ runner.os }}-
       - name: Configure and build via the real registry
+        env:
+          VCPKG_KEEP_ENV_VARS: "PATH"
         run: |
           cmake -S test/smoketest -B test/smoketest/build \
-            -DCMAKE_TOOLCHAIN_FILE=../vcpkg-tool/scripts/buildsystems/vcpkg.cmake
+            -DCMAKE_TOOLCHAIN_FILE="$(pwd)/../vcpkg-tool/scripts/buildsystems/vcpkg.cmake"
           cmake --build test/smoketest/build
           test/smoketest/build/slint_vcpkg_smoketest
 
